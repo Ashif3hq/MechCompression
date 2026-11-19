@@ -576,6 +576,8 @@
   .logo { font-size: 19px; }
   .version-tag { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 2px 6px; border-radius: 4px; }
   .header-sub { font-size: 12px; color: var(--text-dim); }
+  .author-link { color: var(--accent); font-weight: 500; text-decoration: none; }
+  .author-link:hover { text-decoration: underline; }
   .header-right { font-family: var(--sans); gap: 10px; }
   .header-field { display: flex; align-items: center; gap: 6px; }
   .header-field-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
@@ -1105,6 +1107,14 @@ changeLanguage('en');
     });
   }
 
+  /* ---------- author name links to LinkedIn ---------- */
+  const LINKEDIN = 'https://www.linkedin.com/in/mohammed-ashif-arakkal-moideenkutty-5b3128250';
+  function linkAuthor(){
+    const el = document.querySelector('[data-i18n="dev_by"]');
+    if (!el || el.querySelector('a')) return;
+    el.innerHTML = el.textContent.replace(/Ashif/, `<a class="author-link" href="${LINKEDIN}" target="_blank" rel="noopener noreferrer" title="Mohammed Ashif on LinkedIn">Ashif</a>`);
+  }
+
   /* ---------- wrap app functions so the polish survives re-renders ---------- */
   function wrap(name, after){
     const f = window[name]; if (typeof f !== 'function') return;
@@ -1114,7 +1124,8 @@ changeLanguage('en');
   window.addEventListener('DOMContentLoaded', () => {
     wrap('updateChart', applyChartTheme);
     wrap('renderResults', decorateResults);
-    wrap('changeLanguage', decorateResults);
+    wrap('changeLanguage', () => { decorateResults(); linkAuthor(); });
+    linkAuthor();
     const tb = document.getElementById('themeToggle'); if (tb) tb.addEventListener('click', window.mcToggleTheme);
     const dia = document.getElementById('diameter'); if (dia) dia.addEventListener('input', updateArea);
     updateArea();
