@@ -10,7 +10,9 @@ No installation or sign-up is needed. It works on any modern browser (Chrome, Ed
 
 ## Features
 
-- **File import**: `.TRA`, `.CSV` and `.TXT` exports from testing machines. You can load several specimens at once.
+- **Opens data from most testing machines**: Instron (Bluehill), ZwickRoell (testXpert), Shimadzu (Trapezium), MTS, Lloyd/NEXYGEN, Tinius Olsen, Testometric, `.TRA` files and plain two- or three-column data, as CSV, TXT, DAT, TSV or Excel (`.xlsx`/`.xls`/`.ods`). The importer auto-detects the delimiter, decimal commas, header and unit rows, column names in English, French, German or Spanish, units (N/kN/lbf/kgf, mm/m/in/µm, s/ms/min), UTF-16 files, and stress–strain-only exports.
+- **Reads the specimen dimensions** (diameter, height/gauge length, or width × thickness or area for non-circular specimens) from the file's header when they are present.
+- You can load several specimens at once.
 - **Three plot views**: stress–strain (σ–ε), force–displacement (F–δ) and force–time (F–t).
 - **Young's modulus**: select the linear region on the curve, and the modulus is computed by linear regression, with the fitted line drawn on the curve.
 - **Maximum point**: pick the peak stress or force.

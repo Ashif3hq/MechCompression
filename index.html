@@ -1124,5 +1124,287 @@ changeLanguage('en');
   });
 })();
 </script>
+<script id="mc-import-js">
+/* ---- MechCompression universal importer: reads exports from most testing machines ---- */
+(function(root){
+  const NUM = /^[-+]?(\d+[.,]?\d*|[.,]\d+)([eE][-+]?\d+)?$/;
+  const clean = s => String(s == null ? '' : s).replace(/^﻿/, '').replace(/^["']|["']$/g, '').trim();
+  const norm = s => clean(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/Ã©|Ã¨/g, 'e');
+
+  function splitLine(line, d){
+    if (d === 'ws') return line.trim().split(/\s+/);
+    // CSV split that respects quotes
+    const out = []; let cur = '', q = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { q = !q; continue; }
+      if (c === d && !q) { out.push(cur); cur = ''; continue; }
+      cur += c;
+    }
+    out.push(cur);
+    return out.map(s => s.trim());
+  }
+  const isNum = s => NUM.test(clean(s).replace(/\s/g, ''));
+
+  function detectDelimiter(lines){
+    let best = null, bestScore = -1;
+    for (const d of ['\t', ';', ',', 'ws']) {
+      const counts = {};
+      let numericRows = 0;
+      for (const l of lines.slice(0, 400)) {
+        const f = splitLine(l, d);
+        if (f.length < 2) continue;
+        const n = f.filter(isNum).length;
+        if (n >= 2 && n >= f.length - 1) { numericRows++; counts[f.length] = (counts[f.length] || 0) + 1; }
+      }
+      const mode = Math.max(0, ...Object.values(counts));
+      // prefer delimiters giving many consistent numeric rows; ',' loses ties (may be decimal comma)
+      const score = mode * 10 + numericRows - (d === ',' ? 1 : 0) - (d === 'ws' ? 2 : 0);
+      if (score > bestScore) { bestScore = score; best = d; }
+    }
+    return best;
+  }
+
+  // ---- unit handling ----
+  function unitOf(name){
+    const m = String(name).match(/[\[(]\s*([^\])]+)\s*[\])]/);
+    if (m) return m[1].trim();
+    const m2 = String(name).match(/\s(?:in|en)\s+([a-zA-Zµ%\/]+)\s*$/);
+    return m2 ? m2[1] : '';
+  }
+  const FORCE_U = { n:1, kn:1000, mn:1e6, lbf:4.448222, lb:4.448222, kgf:9.80665, kp:9.80665, gf:0.00980665, dan:10 };
+  const LEN_U = { mm:1, m:1000, cm:10, um:0.001, 'µm':0.001, 'μm':0.001, mic:0.001, in:25.4, inch:25.4, '"':25.4 };
+  const TIME_U = { s:1, sec:1, secs:1, seconds:1, ms:0.001, min:60, mins:60, h:3600 };
+  const STRESS_U = { mpa:1, 'n/mm2':1, 'n/mm²':1, 'n/mm^2':1, kpa:0.001, pa:1e-6, gpa:1000, psi:0.00689476, ksi:6.89476 };
+  const unitFactor = (u, table, def) => { const k = norm(u).replace(/\s/g, ''); return k in table ? table[k] : def; };
+
+  // ---- column classification ----
+  const KW = {
+    time:   [/\btime\b/, /\btemps\b/, /\bzeit\b/, /\btiempo\b/, /\btempo\b/, /prufzeit|testzeit|test time|elapsed/, /^t$/, /^t\s*[\[(]/],
+    force:  [/force/, /\bload\b/, /kraft/, /charge/, /fuerza/, /carga/, /forza/, /^f\s*[\[(]/, /^f$/, /^fn?$/, /standard ?force|standardkraft/],
+    strain: [/strain/, /dehnung/, /deformation/, /deformacion/, /^e\s*[\[(]/, /epsilon|ε/],
+    disp:   [/displacement|deplacement|desplazamiento/, /extension|elongation|allongement|alargamiento/, /stroke|course/, /crosshead|traverse|travers/, /position/, /\btravel\b|\bweg\b|standardweg|wegaufnehmer/, /deflection|compression|compressive extension|\bdisp\b|\bext\b/, /^d\s*[\[(]|^s\s*[\[(]|^l\s*[\[(]/],
+    stress: [/stress|contrainte|spannung|esfuerzo/, /^σ|^sigma/],
+    le:     [/\ble\b|canal|channel|extensometer|extensometre|extensometro/]
+  };
+  function classify(name, unit){
+    const n = norm(name), u = norm(unit);
+    const has = k => KW[k].some(r => r.test(n));
+    if (has('time') && !has('force')) return 'time';
+    if (has('stress') || /^(m|k|g)?pa$|^psi$|^ksi$|^n\/mm/.test(u)) return 'stress';
+    if (has('force') || u in FORCE_U) return 'force';
+    if (has('strain') && (u === '%' || u === 'mm/mm' || u === '' || u === '-' || u === 'm/m')) return 'strain';
+    if (has('disp') || (has('strain') && u in LEN_U)) return 'disp';
+    if (u === 'n' || u === 'kn' || u === 'lbf') return 'force';
+    if (u in TIME_U) return 'time';
+    if (u in LEN_U) return 'disp';
+    if (u === '%') return 'strain';
+    return null;
+  }
+
+  // ---- metadata: specimen dimensions ----
+  const META = {
+    d0: [/diam/, /durchmesser/, /^d0\b|^d₀|^d_0/],
+    L0: [/height|hauteur|hohe|altura|altezza/, /gauge length|gage length|initial length|longueur|lange|length|longitud|^l0\b|^l₀|^h0\b|^h₀|thickness of sample|specimen length/],
+    w:  [/width|largeur|breite|ancho|^b0\b|^a0\b|^w\b/],
+    th: [/thickness|epaisseur|dicke|espesor|^t0\b/],
+    A:  [/area|section|querschnitt|aire|^s0\b|^a0\b/]
+  };
+  function readMeta(lines, delim, dataStart, dataEnd){
+    const meta = {};
+    const consider = (key, val, unit) => {
+      const n = norm(key);
+      if (!n || n.length > 60) return;
+      let v = parseFloat(String(val).replace(',', '.'));
+      if (!isFinite(v) || v <= 0) return;
+      const u = norm(unit || unitOf(key));
+      for (const [k, res] of Object.entries(META)) {
+        if (meta[k] != null) continue;
+        if (!res.some(r => r.test(n))) continue;
+        if (k === 'A') { v *= (u === 'cm2' || u === 'cm²') ? 100 : (u === 'm2' || u === 'm²') ? 1e6 : (u === 'in2' || u === 'in²') ? 645.16 : 1; }
+        else v *= unitFactor(u, LEN_U, 1);
+        meta[k] = v; return;
+      }
+    };
+    lines.forEach((l, i) => {
+      if (i >= dataStart && i < dataEnd) return;
+      // "Key: 12.5 mm" or "Key = 12.5 mm"
+      const m = l.match(/^\s*"?([^:=;\t,"]{1,60}?)"?\s*[:=]\s*"?([-+]?\d+(?:[.,]\d+)?)\s*"?\s*([a-zA-Zµμ²%\/]*)/);
+      if (m) { consider(m[1], m[2], m[3]); return; }
+      const f = splitLine(l, delim === 'ws' ? '\t' : delim).map(clean).filter(x => x !== '');
+      if (f.length >= 2 && f.length <= 5 && !isNum(f[0]) && isNum(f[1])) consider(f[0], f[1].replace(/\s/g, ''), f[2] && !isNum(f[2]) ? f[2] : '');
+    });
+    return meta;
+  }
+
+  // ---- main ----
+  function convert(text){
+    text = String(text).replace(/\r\n?/g, '\n');
+    const lines = text.split('\n').filter(l => l.trim() !== '');
+    if (lines.length < 5) throw new Error('File is too short to contain test data.');
+    const delim = detectDelimiter(lines);
+    const fields = lines.map(l => splitLine(l, delim));
+    // find the longest run of numeric rows with the most common width
+    let best = { start: -1, end: -1, w: 0 }, start = -1, w = 0;
+    const numericRow = f => { const n = f.filter(x => isNum(x)).length; const nonEmpty = f.filter(x => clean(x) !== '').length; return n >= 2 && n >= nonEmpty - 1 ? f.length : 0; };
+    for (let i = 0; i <= fields.length; i++) {
+      const rw = i < fields.length ? numericRow(fields[i]) : 0;
+      if (rw && start >= 0 && rw === w) continue;
+      if (start >= 0 && i - start > best.end - best.start) best = { start, end: i, w };
+      start = rw ? i : -1; w = rw;
+    }
+    if (best.start < 0 || best.end - best.start < 10) throw new Error('Could not find a block of numeric data.');
+    const ncol = best.w;
+    // decimal comma?
+    const sample = fields.slice(best.start, Math.min(best.end, best.start + 50)).flat();
+    const decComma = delim !== ',' && sample.some(x => /^\s*[-+]?\d+,\d+\s*$/.test(x));
+    const toNum = x => { let s = clean(x).replace(/\s/g, ''); if (decComma) s = s.replace(/\./g, '').replace(',', '.'); return parseFloat(s); };
+
+    // header and unit rows (up to 4 lines above the data)
+    let names = new Array(ncol).fill(''), units = new Array(ncol).fill('');
+    for (let i = best.start - 1; i >= Math.max(0, best.start - 4); i--) {
+      const f = fields[i].map(clean);
+      if (f.length < ncol - 1 || f.filter(x => x !== '').length < 2) continue;
+      const looksUnits = f.filter(x => x !== '').every(x => x.length <= 8 && /^[\[(]?[a-zA-Zµμ%°\/²^0-9.\-]*[\])]?$/.test(x)) && f.some(x => /^[\[(]?(s|sec|n|kn|mm|%|mpa|lbf|in|min|m|kgf|n\/mm2?|mm\/mm|-)[\])]?$/i.test(x));
+      if (looksUnits && units.every(u => !u)) { units = f.map(x => x.replace(/[\[\]()]/g, '')); continue; }
+      if (names.every(n => !n)) { names = f; break; }
+    }
+    const roles = {};
+    names.forEach((n, i) => {
+      const u = units[i] || unitOf(n);
+      const r = classify(n, u);
+      if (r && roles[r] == null) roles[r] = { i, u };
+    });
+    // fallbacks when there is no usable header
+    if (roles.force == null && roles.stress == null) {
+      if (ncol === 2) { roles.disp = roles.disp || { i: 0, u: 'mm' }; roles.force = { i: 1, u: 'N' }; }
+      else if (ncol >= 3) { roles.time = roles.time || { i: 0, u: 's' }; roles.disp = roles.disp || { i: 1, u: 'mm' }; roles.force = { i: 2, u: 'N' }; }
+    }
+    if (roles.force == null && roles.stress == null) throw new Error('Could not find a force or load column.');
+
+    const meta = readMeta(lines, delim, best.start, best.end);
+    // area / equivalent diameter
+    let d0 = meta.d0 || null, note = '';
+    if (!d0 && meta.w && meta.th) { d0 = Math.sqrt(4 * meta.w * meta.th / Math.PI); note = `rectangular ${meta.w}×${meta.th} mm → equivalent Ø ${d0.toFixed(3)} mm`; }
+    if (!d0 && meta.A) { d0 = Math.sqrt(4 * meta.A / Math.PI); note = `area ${meta.A} mm² → equivalent Ø ${d0.toFixed(3)} mm`; }
+    const L0 = meta.L0 || null;
+    const area = d0 ? Math.PI * (d0 / 2) ** 2 : null;
+
+    const fF = roles.force ? unitFactor(roles.force.u, FORCE_U, 1) : 1;
+    const fD = roles.disp ? unitFactor(roles.disp.u, LEN_U, 1) : 1;
+    const fT = roles.time ? unitFactor(roles.time.u, TIME_U, 1) : 1;
+    const fS = roles.stress ? unitFactor(roles.stress.u, STRESS_U, 1) : 1;
+    const strainPct = roles.strain && (norm(roles.strain.u) === '%' || /%/.test(names[roles.strain.i]));
+    const Luse = L0 || 26;
+
+    const out = [];
+    for (let r = best.start; r < best.end; r++) {
+      const f = fields[r];
+      let F = roles.force ? toNum(f[roles.force.i]) * fF : (area ? toNum(f[roles.stress.i]) * fS * area : NaN);
+      let D = roles.disp ? toNum(f[roles.disp.i]) * fD : (roles.strain ? toNum(f[roles.strain.i]) / (strainPct ? 100 : 1) * Luse : NaN);
+      let T = roles.time ? toNum(f[roles.time.i]) * fT : (r - best.start);
+      if (!isFinite(F)) continue;
+      if (!isFinite(D)) D = 0;
+      out.push([T, F, D]);
+    }
+    if (out.length < 10) throw new Error('Too few valid data points.');
+    // compression data is often negative: use magnitudes, starting at zero displacement
+    const D0 = Math.abs(out[0][2]);
+    const rows = out.map(([T, F, D]) => `${T.toFixed(4)};${Math.abs(F).toFixed(5)};${Math.max(0, Math.abs(D) - D0).toFixed(6)}`);
+    const canonical = ['"Temps";"Force";"Allongement"', '"s";"N";"mm"'].concat(rows).join('\n');
+    const detected = Object.entries(roles).filter(([k]) => ['time','force','disp','strain','stress'].includes(k)).map(([k, v]) => `${k}: ${names[v.i] || 'column ' + (v.i + 1)}`);
+    return { canonical, d0, L0, note, points: rows.length, detected, delimiter: delim === '\t' ? 'tab' : delim, decimalComma: decComma };
+  }
+
+  function isNativeTRA(text){
+    return /"?temps"?\s*;/i.test(text.slice(0, 4000)) && /;/.test(text);
+  }
+
+  function decode(buf){
+    const b = new Uint8Array(buf);
+    if (b[0] === 0xFF && b[1] === 0xFE) return new TextDecoder('utf-16le').decode(b);
+    if (b[0] === 0xFE && b[1] === 0xFF) return new TextDecoder('utf-16be').decode(b);
+    // UTF-16 without BOM (many zero bytes)
+    let zeros = 0; for (let i = 1; i < Math.min(b.length, 2000); i += 2) if (b[i] === 0) zeros++;
+    if (zeros > 300) return new TextDecoder('utf-16le').decode(b);
+    try { return new TextDecoder('utf-8', { fatal: true }).decode(b); } catch (e) { return new TextDecoder('iso-8859-1').decode(b); }
+  }
+
+  root.MCImport = { convert, isNativeTRA, decode };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+(function(){
+
+  /* ---------- glue: route every file through the universal importer ---------- */
+  const META = {};
+  let xlsxLoading = null;
+  function loadXLSX(){
+    if (window.XLSX) return Promise.resolve();
+    return xlsxLoading || (xlsxLoading = new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload = res; s.onerror = () => rej(new Error('Could not load the Excel reader. Check your internet connection.'));
+      document.head.appendChild(s);
+    }));
+  }
+  async function toText(file){
+    const buf = await file.arrayBuffer();
+    if (/\.(xlsx|xlsm|xls|ods)$/i.test(file.name)) {
+      await loadXLSX();
+      const wb = XLSX.read(buf, { type: 'array' });
+      // pick the sheet with the most numeric cells
+      // the sheet with the most numeric cells holds the data; other sheets are read for specimen dimensions
+      const sheets = wb.SheetNames.map(n => XLSX.utils.sheet_to_csv(wb.Sheets[n], { FS: '\t', blankrows: false }));
+      const score = csv => (csv.match(/\t-?\d/g) || []).length;
+      const bi = sheets.reduce((b, c, i) => score(c) > score(sheets[b]) ? i : b, 0);
+      return sheets.filter((_, i) => i !== bi).join('\n') + '\n' + sheets[bi];
+    }
+    return MCImport.decode(buf);
+  }
+  window.addEventListener('DOMContentLoaded', () => {
+    const origHandle = window.handleFiles, origParse = window.parseAndAddFile;
+    if (typeof origHandle !== 'function' || typeof origParse !== 'function') return;
+    window.handleFiles = async function(files){
+      if (!files || !files.length) return origHandle(files);
+      const out = [];
+      for (const f of Array.from(files)) {
+        try {
+          const text = await toText(f);
+          if (MCImport.isNativeTRA(text)) { out.push(f); continue; }
+          const r = MCImport.convert(text);
+          const base = f.name.replace(/\.[^.]+$/, '');
+          const name = base + '.csv';
+          META[name] = r;
+          out.push(new File([r.canonical], name, { type: 'text/csv' }));
+        } catch (e) {
+          showToast(`${f.name}: ${e.message}`, 'error');
+        }
+      }
+      if (out.length) return origHandle(out);
+    };
+    window.parseAndAddFile = function(text, fname){
+      const before = sessions.length;
+      const res = origParse.apply(this, arguments);
+      const m = META[fname];
+      if (m && sessions.length > before) {
+        const s = sessions[sessions.length - 1];
+        if (m.d0) s.d0 = +m.d0.toFixed(4);
+        if (m.L0) s.L0 = m.L0;
+        if (m.d0 || m.L0) reprocessSession(s);
+        const dims = [m.d0 ? `Ø ${(+m.d0.toFixed(3))} mm` : 'diameter not in file', m.L0 ? `L₀ ${m.L0} mm` : 'height not in file'].join(', ');
+        console.info('[MechCompression import]', fname, m.detected.join('; '), m.note);
+        setTimeout(() => showToast(`Read ${m.points} points from ${fname} (${dims}${m.note ? '; ' + m.note : ''})`), 50);
+        delete META[fname];
+      }
+      return res;
+    };
+    const inp = document.getElementById('fileInput');
+    if (inp) inp.setAttribute('accept', '.tra,.TRA,.csv,.txt,.dat,.asc,.tsv,.xlsx,.xls,.xlsm,.ods,.raw,.out');
+    const sup = document.querySelector('[data-i18n="supports"]');
+    if (sup) { sup.removeAttribute('data-i18n'); sup.textContent = 'Instron, Zwick, Shimadzu, MTS, Lloyd… CSV, TXT, TRA, DAT, Excel'; }
+  });
+
+})();
+</script>
 </body>
 </html>
