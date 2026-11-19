@@ -27,7 +27,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/1.2.1/chartjs-plugin-zoom.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<script>(function(){var t=null;try{t=localStorage.getItem("mc-theme")}catch(e){}if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",t);})();</script>
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -558,18 +559,112 @@
   .hidden { display: none !important; }
 
 </style>
+<style id="mc-ui">
+  /* ---- MechCompression UI polish (v2.1) ---- */
+  :root { --overlay: rgba(255,255,255,0.85); --accent-soft: rgba(26,115,232,0.08); --shadow: 0 8px 24px rgba(15,23,42,0.12); }
+  :root[data-theme="dark"] {
+    --bg: #0f1419; --surface: #171d24; --surface2: #1d242c; --border: #2c3540;
+    --accent: #6ea8fe; --accent2: #f28b82; --accent3: #81c995; --warn: #fdd663; --danger: #f28b82;
+    --text: #e8eaed; --text-muted: #a8b0ba; --text-dim: #6b7480;
+    --overlay: rgba(15,20,25,0.85); --accent-soft: rgba(110,168,254,0.14); --shadow: 0 8px 24px rgba(0,0,0,0.5);
+    color-scheme: dark;
+  }
+  body { font-feature-settings: "tnum"; }
+
+  /* header */
+  header { padding: 10px 20px; gap: 10px; }
+  .logo { font-size: 19px; }
+  .version-tag { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 2px 6px; border-radius: 4px; }
+  .header-sub { font-size: 12px; color: var(--text-dim); }
+  .header-right { font-family: var(--sans); gap: 10px; }
+  .header-field { display: flex; align-items: center; gap: 6px; }
+  .header-field-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .header-status { font-size: 12px; color: var(--text-muted); padding-left: 10px; border-left: 1px solid var(--border); }
+  .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text-muted); cursor: pointer; transition: all .15s; }
+  .icon-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  /* one font family; mono only for numbers */
+  .section-label, .info-field label, .mode-btn, .result-label, .toolbar-label, .range-val label, .status-bar, .info-field .unit { font-family: var(--sans); }
+  .section-label { font-size: 11px; letter-spacing: .6px; }
+  .info-field label { font-size: 11px; }
+  .mode-btn { font-size: 12px; }
+  .toolbar-label { font-size: 12px; font-weight: 500; }
+
+  /* sidebar: scroll area + pinned actions */
+  .app { grid-template-columns: 300px 1fr; }
+  .sidebar { overflow: hidden; }
+  .sidebar-scroll { flex: 1; overflow-y: auto; min-height: 0; }
+  .sidebar-footer { flex-shrink: 0; padding: 10px 16px 12px; border-top: 1px solid var(--border); background: var(--surface); box-shadow: 0 -4px 12px rgba(15,23,42,0.04); }
+  .sidebar-footer .btn:first-child { margin-top: 0; }
+  .section-label.mc-collapsible { cursor: pointer; display: flex; align-items: center; user-select: none; }
+  .section-label.mc-collapsible:hover { color: var(--text); }
+  .mc-chev { margin-left: auto; transition: transform .2s; font-size: 12px; line-height: 1; }
+  .sidebar-section.collapsed .mc-chev { transform: rotate(-90deg); }
+  .sidebar-section.collapsed > :not(.section-label) { display: none !important; }
+  .sidebar-section.collapsed .section-label { margin-bottom: 0; }
+
+  /* mode buttons */
+  .mode-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 8px; }
+  .mode-btn .mode-icon { margin-bottom: 0; }
+  .mode-btn .mode-icon svg { width: 16px; height: 16px; }
+  .mode-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  :root[data-theme="dark"] .mode-btn.active { color: #0f1419; }
+  .mode-btn kbd, .kbd { font-family: var(--mono); font-size: 9px; color: inherit; opacity: .55; border: 1px solid currentColor; border-radius: 3px; padding: 0 3px; margin-left: 2px; }
+
+  /* results */
+  .result-card { padding: 12px 14px 12px 16px; }
+  .result-value { font-size: 24px; }
+  .result-label { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
+  .mc-copy { position: absolute; top: 8px; right: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text-muted); font-size: 11px; border-radius: 4px; padding: 2px 6px; cursor: pointer; opacity: 0; transition: opacity .15s; font-family: var(--sans); }
+  .result-card:hover .mc-copy { opacity: 1; }
+  .mc-copy:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* toolbar + image export */
+  .chart-toolbar { padding: 8px 16px; }
+  .tool-btn { display: inline-flex; align-items: center; gap: 6px; }
+  .tool-btn svg { width: 15px; height: 15px; }
+  .tool-btn-accent { color: var(--accent); border-color: var(--accent); }
+  .tool-btn-accent:hover { background: var(--accent-soft); }
+  .axis-toggle { margin-left: auto; }
+  .img-export-wrap { position: relative; }
+  .img-panel { position: absolute; right: 0; top: calc(100% + 8px); width: 290px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); padding: 14px; z-index: 200; display: flex; flex-direction: column; gap: 10px; }
+  .img-panel-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .img-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--text-muted); }
+  .img-row select { max-width: 180px; }
+  .img-check { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+  .img-actions { display: grid; grid-template-columns: 1.4fr 1fr; gap: 6px; }
+  .img-actions .btn { margin-top: 0; }
+  .img-note { font-size: 11px; color: var(--text-dim); line-height: 1.4; }
+
+  /* empty state */
+  .empty-state { position: absolute; inset: 0; background: var(--surface); z-index: 5; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; pointer-events: none; }
+  .empty-curve { width: 260px; color: var(--accent); opacity: .25; margin-bottom: 6px; }
+  .empty-title { font-size: 16px; font-weight: 500; color: var(--text); }
+  .empty-sub { font-size: 13px; color: var(--text-muted); }
+  .empty-btn { width: auto; padding: 8px 16px; pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .empty-btn svg { width: 15px; height: 15px; }
+
+  /* dark-mode fixes for hard-coded light colours */
+  .loading-overlay { background: var(--overlay); }
+  .toast { background: var(--surface); }
+  .file-item:hover { border-color: var(--text-dim); }
+  .btn-primary:hover { filter: brightness(1.08); background: var(--accent); }
+  :root[data-theme="dark"] .btn-primary { color: #0f1419; }
+  :root[data-theme="dark"] .btn-primary:disabled { color: var(--text-dim); background: var(--border); }
+  .dropzone:hover, .dropzone.drag-over, .file-item.active, .tool-btn.active { background: var(--accent-soft); }
+</style>
+
 </head>
 <body>
 
 <header>
   <div class="logo">Mech<span>Compression</span></div>
-  <div style="display: flex; flex-direction: column; align-items: flex-start;">
-    <div class="header-tag" data-i18n="app_title">COMPRESSION ANALYZER v2.0</div>
-    <span style="font-size: 8px; color: var(--text-dim); font-weight: 500; letter-spacing: 0.3px; margin-top: 2px; padding-left: 2px;" data-i18n="dev_by">developed by Ashif</span>
-  </div>
+  <span class="version-tag">v2.1</span>
+  <span class="header-sub" data-i18n="dev_by">developed by Ashif</span>
   <div class="header-right">
-    <div style="display:flex; align-items:center; gap:4px; margin-right: 12px;">
-      <span style="font-size: 10px; font-weight:bold; color:var(--text-muted);">UNIT:</span>
+    <div class="header-field">
+      <span class="header-field-label">Unit</span>
       <select id="unitSelector" class="lang-select" onchange="changeUnit(this.value)">
         <option value="Pa">Pa</option>
         <option value="kPa">kPa</option>
@@ -582,12 +677,14 @@
       <option value="fr">🇫🇷 FR</option>
       <option value="es">🇪🇸 ES</option>
     </select>
-    <span id="headerStatus" data-i18n="no_file" style="margin-left: 8px;">No files</span>
+    <button class="icon-btn" id="themeToggle" title="Toggle dark mode (D)" aria-label="Toggle dark mode"><i data-lucide="moon"></i></button>
+    <span id="headerStatus" class="header-status" data-i18n="no_file">No files</span>
   </div>
 </header>
 
 <div class="app">
   <aside class="sidebar">
+   <div class="sidebar-scroll">
     <div class="sidebar-section">
       <div class="section-label" data-i18n="data_file">Data File</div>
       <div id="dropzone" class="dropzone">
@@ -626,16 +723,16 @@
     <div class="sidebar-section">
       <div class="section-label" data-i18n="sel_mode">Selection Mode</div>
       <div class="mode-buttons">
-        <button class="mode-btn" id="modeZoom" onclick="setMode('zoom')">
+        <button class="mode-btn" id="modeZoom" title="Zoom (Z)" onclick="setMode('zoom')">
           <span class="mode-icon"><i data-lucide="zoom-in"></i></span><span data-i18n="zoom">Zoom</span>
         </button>
-        <button class="mode-btn active" id="modePan" onclick="setMode('pan')">
+        <button class="mode-btn active" id="modePan" title="Pan (P)" onclick="setMode('pan')">
           <span class="mode-icon"><i data-lucide="hand"></i></span><span data-i18n="pan">Pan</span>
         </button>
-        <button class="mode-btn" id="modeYoung" onclick="setMode('young')">
+        <button class="mode-btn" id="modeYoung" title="Young's modulus (Y)" onclick="setMode('young')">
           <span class="mode-icon"><i data-lucide="ruler"></i></span><span data-i18n="youngs">Young's</span>
         </button>
-        <button class="mode-btn" id="modeMax" onclick="setMode('max')">
+        <button class="mode-btn" id="modeMax" title="Max σ (M)" onclick="setMode('max')">
           <span class="mode-icon"><i data-lucide="target"></i></span><span data-i18n="max">Max σ</span>
         </button>
       </div>
@@ -654,12 +751,6 @@
         </div>
       </div>
 
-      <button class="btn btn-primary" id="calcBtn" onclick="calculateActive()" disabled>
-        <span data-i18n="calc">▶ Calculate</span>
-      </button>
-      <button class="btn btn-secondary" onclick="clearActiveSelections()">
-        <span data-i18n="clear">✕ Clear Selections</span>
-      </button>
     </div>
 
     <div class="sidebar-section">
@@ -676,19 +767,63 @@
         <button class="btn btn-secondary" onclick="exportJSON()">📋 JSON</button>
       </div>
       <button class="btn btn-secondary" style="margin-top:6px;" onclick="exportActiveReport()"><span data-i18n="full_report">📑 Active File Report</span></button>
+      <button class="btn btn-secondary" style="margin-top:6px;" onclick="mcOpenImagePanel()">🖼 Graph image (PNG)</button>
+    </div>
+   </div>
+    <div class="sidebar-footer">
+      <button class="btn btn-primary" id="calcBtn" onclick="calculateActive()" disabled>
+        <span data-i18n="calc">▶ Calculate</span>
+      </button>
+      <button class="btn btn-secondary" onclick="clearActiveSelections()">
+        <span data-i18n="clear">✕ Clear Selections</span>
+      </button>
     </div>
   </aside>
 
   <div class="main-panel">
     <div class="chart-toolbar">
       <span class="toolbar-label" data-i18n="view">View:</span>
-      <button class="tool-btn active" id="axisStressStrain" onclick="setAxis('stress-strain')">σ – ε</button>
-      <button class="tool-btn" id="axisForceDisp" onclick="setAxis('force-disp')">F – δ</button>
-      <button class="tool-btn" id="axisForceTime" onclick="setAxis('force-time')">F – t</button>
-      <button class="tool-btn" onclick="resetZoom()"><span data-i18n="reset_view">⟳ Reset View</span></button>
+      <button class="tool-btn active" id="axisStressStrain" title="Stress–strain (1)" onclick="setAxis('stress-strain')">σ – ε</button>
+      <button class="tool-btn" id="axisForceDisp" title="Force–displacement (2)" onclick="setAxis('force-disp')">F – δ</button>
+      <button class="tool-btn" id="axisForceTime" title="Force–time (3)" onclick="setAxis('force-time')">F – t</button>
+      <button class="tool-btn" title="Reset view (R)" onclick="resetZoom()"><span data-i18n="reset_view">⟳ Reset View</span></button>
       <label class="axis-toggle">
         <input type="checkbox" id="showRegression" checked onchange="updateChart()"> <span data-i18n="show_fit">Show fit line</span>
       </label>
+      <div class="img-export-wrap">
+        <button class="tool-btn tool-btn-accent" id="imgExportBtn" title="Export graph as image (E)" onclick="mcOpenImagePanel()"><i data-lucide="image-down"></i> <span>Export image</span></button>
+        <div class="img-panel hidden" id="imgPanel">
+          <div class="img-panel-title">Export graph as image</div>
+          <label class="img-row">Size
+            <select id="imgPreset" class="lang-select">
+              <option value="thesis">Report / thesis (4:3)</option>
+              <option value="slide">Slide (16:9)</option>
+              <option value="square">Square (1:1)</option>
+              <option value="view">Current view</option>
+            </select>
+          </label>
+          <label class="img-row">Background
+            <select id="imgBg" class="lang-select">
+              <option value="white">White</option>
+              <option value="transparent">Transparent</option>
+            </select>
+          </label>
+          <label class="img-row">Text size
+            <select id="imgFont" class="lang-select">
+              <option value="1">Normal</option>
+              <option value="1.25" selected>Large</option>
+              <option value="1.5">Extra large</option>
+            </select>
+          </label>
+          <label class="img-check"><input type="checkbox" id="imgLegend" checked> Show legend</label>
+          <label class="img-check"><input type="checkbox" id="imgMarkers"> Show selection lines</label>
+          <div class="img-actions">
+            <button class="btn btn-primary" onclick="mcExportImage('download')">Download PNG</button>
+            <button class="btn btn-secondary" onclick="mcExportImage('copy')">Copy</button>
+          </div>
+          <div class="img-note">High resolution (300 dpi for print, 2560×1440 for slides). Uses the current zoom and always light colours.</div>
+        </div>
+      </div>
     </div>
 
     <div class="chart-container">
@@ -697,9 +832,11 @@
         <div class="loading-text" data-i18n="parsing">Parsing Data...</div>
       </div>
       <canvas id="mainChart"></canvas>
-      <div id="emptyState" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;pointer-events:none;">
-        <div style="opacity:0.3; color:var(--text-muted);"><i data-lucide="line-chart" style="width:48px;height:48px;stroke-width:1.5;"></i></div>
-        <div style="font-family:var(--sans);font-size:14px;color:var(--text-muted);font-weight:500;" data-i18n="load_vis">Load a file to visualize</div>
+      <div id="emptyState" class="empty-state">
+        <svg class="empty-curve" viewBox="0 0 400 220" aria-hidden="true"><path d="M20 200 L80 70 C110 62 230 60 300 52 C340 46 360 20 380 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M20 200 H380 M20 200 V10" stroke="currentColor" stroke-width="1.5" opacity="0.5"/></svg>
+        <div class="empty-title" data-i18n="load_vis">Load a file to visualize</div>
+        <div class="empty-sub">Drop .TRA, .CSV or .TXT files on the left, or try it out first.</div>
+        <button class="btn btn-secondary empty-btn" onclick="mcLoadSample()"><i data-lucide="flask-conical"></i> Load sample data</button>
       </div>
     </div>
 
@@ -798,6 +935,194 @@ var _0x4c8c6c=(591126^591126)+(667273^667272);const AUTHORIZED_DOMAINS=["\u006C\
   <p style="margin-top:30px;font-size:12px;color:#9aa0a6;">${t("\u0067\u0065\u006E\u005F\u0062\u0079")} — ${new Date()['\u0074\u006F\u0049\u0053\u004F\u0053\u0074\u0072\u0069\u006E\u0067']()}</p>
   </body></html>`;download(_0x198bcd,`mechcompression_report_${s['\u006E\u0061\u006D\u0065']}.html`,"lmth/txet".split("").reverse().join(""));showToast(t("detropxe_troper".split("").reverse().join("")));}function download(content,filename,type,_0xe8add){const _0x73f55d=new Blob([content],{'\u0074\u0079\u0070\u0065':type});const a=document['\u0063\u0072\u0065\u0061\u0074\u0065\u0045\u006C\u0065\u006D\u0065\u006E\u0074']("\u0061");_0xe8add=(765893^765888)+(131552^131559);a['\u0068\u0072\u0065\u0066']=URL['\u0063\u0072\u0065\u0061\u0074\u0065\u004F\u0062\u006A\u0065\u0063\u0074\u0055\u0052\u004C'](_0x73f55d);a['\u0064\u006F\u0077\u006E\u006C\u006F\u0061\u0064']=filename;a['\u0063\u006C\u0069\u0063\u006B']();URL['\u0072\u0065\u0076\u006F\u006B\u0065\u004F\u0062\u006A\u0065\u0063\u0074\u0055\u0052\u004C'](a['\u0068\u0072\u0065\u0066']);}function showLoading(show){document['\u0067\u0065\u0074\u0045\u006C\u0065\u006D\u0065\u006E\u0074\u0042\u0079\u0049\u0064']("yalrevOgnidaol".split("").reverse().join(""))['\u0063\u006C\u0061\u0073\u0073\u004C\u0069\u0073\u0074']['\u0074\u006F\u0067\u0067\u006C\u0065']("neddih".split("").reverse().join(""),!show);}function setStatus(state,text){const _0x11_0x9d2=document['\u0067\u0065\u0074\u0045\u006C\u0065\u006D\u0065\u006E\u0074\u0042\u0079\u0049\u0064']("toDsutats".split("").reverse().join(""));if(_0x11_0x9d2)_0x11_0x9d2['\u0063\u006C\u0061\u0073\u0073\u004E\u0061\u006D\u0065']="\u0073\u0074\u0061\u0074\u0075\u0073\u002D\u0064\u006F\u0074\u0020"+state;const _0xc5063b=document['\u0067\u0065\u0074\u0045\u006C\u0065\u006D\u0065\u006E\u0074\u0042\u0079\u0049\u0064']("\u0073\u0074\u0061\u0074\u0075\u0073\u0054\u0065\u0078\u0074");if(_0xc5063b)_0xc5063b['\u0074\u0065\u0078\u0074\u0043\u006F\u006E\u0074\u0065\u006E\u0074']=text;}function setSelDisplay(start,end){const _0xb7g4e=document['\u0067\u0065\u0074\u0045\u006C\u0065\u006D\u0065\u006E\u0074\u0042\u0079\u0049\u0064']("tratSles".split("").reverse().join(""));const _0x7796f=document['\u0067\u0065\u0074\u0045\u006C\u0065\u006D\u0065\u006E\u0074\u0042\u0079\u0049\u0064']("\u0073\u0065\u006C\u0045\u006E\u0064");if(_0xb7g4e)_0xb7g4e['\u0074\u0065\u0078\u0074\u0043\u006F\u006E\u0074\u0065\u006E\u0074']=start;if(_0x7796f)_0x7796f['\u0074\u0065\u0078\u0074\u0043\u006F\u006E\u0074\u0065\u006E\u0074']=end;}function showToast(msg,type="\u0069\u006E\u0066\u006F"){const _0xbbg=document['\u0063\u0072\u0065\u0061\u0074\u0065\u0045\u006C\u0065\u006D\u0065\u006E\u0074']("\u0064\u0069\u0076");_0xbbg['\u0063\u006C\u0061\u0073\u0073\u004E\u0061\u006D\u0065']="\u0074\u006F\u0061\u0073\u0074";_0xbbg['\u0074\u0065\u0078\u0074\u0043\u006F\u006E\u0074\u0065\u006E\u0074']=msg;if(type==="rorre".split("").reverse().join(""))_0xbbg['\u0073\u0074\u0079\u006C\u0065']['\u0062\u006F\u0072\u0064\u0065\u0072\u0043\u006F\u006C\u006F\u0072']=")regnad--(rav".split("").reverse().join("");document['\u0062\u006F\u0064\u0079']['\u0061\u0070\u0070\u0065\u006E\u0064\u0043\u0068\u0069\u006C\u0064'](_0xbbg);setTimeout(()=>_0xbbg['\u0072\u0065\u006D\u006F\u0076\u0065'](),746902^749102);}
 changeLanguage('en');
+</script>
+<script id="mc-ui-js">
+/* ---- MechCompression UI polish (v2.1): theme, shortcuts, sample data, image export ---- */
+(function(){
+  const LS = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k,v){ try { localStorage.setItem(k,v); } catch(e){} } };
+  const icons = () => { if (window.lucide) lucide.createIcons(); };
+  const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+
+  /* ---------- chart theme ---------- */
+  function chartColors(dark){
+    return dark ? { grid:'#2c3540', tick:'#a8b0ba', title:'#a8b0ba', tipBg:'#1d242c', tipBorder:'#2c3540', tipTitle:'#e8eaed', tipBody:'#a8b0ba' }
+                : { grid:'#e2e8f0', tick:'#5f6368', title:'#5f6368', tipBg:'#ffffff', tipBorder:'#cbd5e1', tipTitle:'#202124', tipBody:'#5f6368' };
+  }
+  function applyChartTheme(){
+    if (typeof chartInstance === 'undefined' || !chartInstance) return;
+    const c = chartColors(isDark()), o = chartInstance.options;
+    ['x','y'].forEach(a => { const s = o.scales[a]; if (!s) return; s.grid.color = c.grid; s.ticks.color = c.tick; s.title.color = c.title; });
+    const p = o.plugins;
+    if (p.legend && p.legend.labels) p.legend.labels.color = c.tick;
+    if (p.tooltip) Object.assign(p.tooltip, { backgroundColor:c.tipBg, borderColor:c.tipBorder, titleColor:c.tipTitle, bodyColor:c.tipBody });
+    chartInstance.update('none');
+  }
+  function setTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    LS.set('mc-theme', t);
+    const b = document.getElementById('themeToggle');
+    if (b) { b.innerHTML = '<i data-lucide="' + (t === 'dark' ? 'sun' : 'moon') + '"></i>'; icons(); }
+    applyChartTheme();
+  }
+  window.mcToggleTheme = () => setTheme(isDark() ? 'light' : 'dark');
+
+  /* ---------- sample data ---------- */
+  window.mcLoadSample = function(){
+    const d0 = 13, L0 = 26, A = Math.PI * (d0/2) ** 2, E = 48;      // MPa
+    let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647 - 0.5);
+    const rows = ['"Temps";"Force";"Allongement"', '"s";"N";"mm"'];
+    for (let i = 0; i <= 600; i++) {
+      const eps = i / 1000;                                    // 0 – 0.60
+      let sig = eps < 0.04 ? E * eps : E * 0.04 + 2.2 * (eps - 0.04);
+      if (eps > 0.42) sig += 60 * (eps - 0.42) ** 2;
+      sig = Math.max(0, sig + rnd() * 0.03);
+      const disp = eps * L0, t = disp / 0.05;
+      rows.push([t.toFixed(2), (sig * A).toFixed(3), disp.toFixed(4)].join(';'));
+    }
+    const f = new File([rows.join('\n')], 'sample_foam.csv', { type: 'text/csv' });
+    handleFiles([f]);
+  };
+
+  /* ---------- image export ---------- */
+  const PRESETS = { thesis:{w:900,h:675,s:3}, slide:{w:1280,h:720,s:2}, square:{w:800,h:800,s:3} };
+  window.mcOpenImagePanel = function(){
+    const p = document.getElementById('imgPanel');
+    p.classList.toggle('hidden');
+  };
+  function buildExportCanvas(){
+    if (typeof chartInstance === 'undefined' || !chartInstance || !chartInstance.data.datasets.length) { showToast('Load a file first, then export the graph.', 'error'); return null; }
+    const preset = document.getElementById('imgPreset').value;
+    const bg = document.getElementById('imgBg').value;
+    const fs = parseFloat(document.getElementById('imgFont').value) || 1;
+    const legend = document.getElementById('imgLegend').checked;
+    let { w, h, s } = PRESETS[preset] || {};
+    if (preset === 'view') { w = chartInstance.width; h = chartInstance.height; s = 3; }
+    const src = chartInstance, so = src.options, c = chartColors(false);
+    const canvas = document.createElement('canvas');
+    canvas.width = w * s; canvas.height = h * s;
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    const holder = document.createElement('div');
+    holder.style.cssText = `position:fixed;left:-99999px;top:0;width:${w}px;height:${h}px;`;
+    holder.appendChild(canvas); document.body.appendChild(holder);
+    const axis = a => ({
+      type: (so.scales[a] && so.scales[a].type) || 'linear',
+      min: src.scales[a].min, max: src.scales[a].max,
+      title: { display: true, text: so.scales[a].title.text, color: '#202124', font: { family: 'Roboto', size: Math.round(15*fs), weight: '500' } },
+      grid: { color: '#e5e7eb' },
+      border: { color: '#9aa0a6' },
+      ticks: { color: '#3c4043', font: { family: 'Roboto', size: Math.round(12*fs) } }
+    });
+    const bgPlugin = { id: 'mcBg', beforeDraw(ch){ if (bg !== 'white') return; const x = ch.ctx; x.save(); x.fillStyle = '#ffffff'; x.fillRect(0, 0, ch.width, ch.height); x.restore(); } };
+    const markers = document.getElementById('imgMarkers').checked;
+    const selLabels = [t('sel_start'), t('sel_end')];
+    const datasets = src.data.datasets.filter((d, i) => src.isDatasetVisible(i) && (markers || !selLabels.includes(d.label))).map(d => Object.assign({}, d, { data: d.data.slice() }));
+    const ch = new Chart(canvas.getContext('2d'), {
+      type: src.config.type, data: { datasets },
+      options: {
+        responsive: false, animation: false, devicePixelRatio: s, maintainAspectRatio: false,
+        layout: { padding: 16 },
+        plugins: { legend: { display: legend, position: 'top', labels: { color: '#202124', usePointStyle: true, boxWidth: 12, font: { family: 'Roboto', size: Math.round(12*fs) } } }, tooltip: { enabled: false } },
+        scales: { x: axis('x'), y: axis('y') }
+      },
+      plugins: [bgPlugin]
+    });
+    ch.resize(w, h);
+    return { canvas, cleanup(){ ch.destroy(); holder.remove(); } };
+  }
+  window.mcExportImage = async function(action){
+    const r = buildExportCanvas(); if (!r) return;
+    try {
+      const blob = await new Promise(res => r.canvas.toBlob(res, 'image/png'));
+      if (action === 'copy') {
+        if (!navigator.clipboard || !window.ClipboardItem) throw new Error('Copying images is not supported in this browser. Use Download instead.');
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        showToast('Graph copied. Paste it into PowerPoint, Word or Docs.');
+      } else {
+        const act = (typeof getActiveSession === 'function' && getActiveSession()) || null;
+        const view = (typeof currentAxis !== 'undefined' ? currentAxis : 'graph');
+        const name = `mechcompression_${act ? act.name : 'graph'}_${view}.png`.replace(/[^\w.\-]+/g, '_');
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        showToast('Graph saved as ' + name);
+      }
+      document.getElementById('imgPanel').classList.add('hidden');
+    } catch (e) { showToast(e.message || String(e), 'error'); }
+    finally { r.cleanup(); }
+  };
+
+  /* ---------- results: copy buttons ---------- */
+  function decorateResults(){
+    document.querySelectorAll('#results .result-card').forEach(card => {
+      if (card.querySelector('.mc-copy')) return;
+      const b = document.createElement('button'); b.className = 'mc-copy'; b.textContent = 'Copy'; b.title = 'Copy value';
+      b.onclick = () => {
+        const v = card.querySelector('.result-value'); if (!v) return;
+        const txt = v.textContent.replace(/\s+/g, ' ').trim().replace(/^([-\d.,eE+]+)(\S)/, '$1 $2');
+        (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1200); }).catch(() => {});
+      };
+      card.appendChild(b);
+    });
+  }
+
+  /* ---------- live area ---------- */
+  function updateArea(){
+    const d = parseFloat(document.getElementById('diameter').value);
+    const el = document.getElementById('areaDisplay');
+    if (el && d > 0) el.textContent = (Math.PI * (d/2) ** 2).toFixed(2);
+  }
+
+  /* ---------- collapsible sidebar sections ---------- */
+  function initCollapsible(){
+    let saved = {}; try { saved = JSON.parse(LS.get('mc-collapsed') || '{}'); } catch(e){}
+    document.querySelectorAll('.sidebar-scroll .sidebar-section').forEach((sec, i) => {
+      const lab = sec.querySelector('.section-label'); if (!lab) return;
+      lab.classList.add('mc-collapsible');
+      const ch = document.createElement('span'); ch.className = 'mc-chev'; ch.textContent = '▾'; lab.appendChild(ch);
+      if (saved[i]) sec.classList.add('collapsed');
+      lab.addEventListener('click', () => { sec.classList.toggle('collapsed'); saved[i] = sec.classList.contains('collapsed'); LS.set('mc-collapsed', JSON.stringify(saved)); });
+    });
+  }
+
+  /* ---------- keyboard shortcuts ---------- */
+  function initShortcuts(){
+    const hints = { modeZoom:'Z', modePan:'P', modeYoung:'Y', modeMax:'M' };
+    Object.entries(hints).forEach(([id, k]) => { const b = document.getElementById(id); if (b) { const kb = document.createElement('kbd'); kb.textContent = k; b.appendChild(kb); } });
+    document.addEventListener('keydown', e => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'select' || tag === 'textarea' || e.target.isContentEditable) return;
+      const k = e.key.toLowerCase();
+      const map = { z:()=>setMode('zoom'), p:()=>setMode('pan'), y:()=>setMode('young'), m:()=>setMode('max'),
+        r:()=>resetZoom(), '1':()=>setAxis('stress-strain'), '2':()=>setAxis('force-disp'), '3':()=>setAxis('force-time'),
+        d:()=>window.mcToggleTheme(), e:()=>window.mcOpenImagePanel(),
+        enter:()=>{ const c = document.getElementById('calcBtn'); if (c && !c.disabled) calculateActive(); },
+        escape:()=>document.getElementById('imgPanel').classList.add('hidden') };
+      if (map[k]) { e.preventDefault(); map[k](); }
+    });
+    document.addEventListener('click', e => {
+      const p = document.getElementById('imgPanel');
+      if (!p.classList.contains('hidden') && !e.target.closest('.img-export-wrap') && !e.target.closest('[onclick*="mcOpenImagePanel"]')) p.classList.add('hidden');
+    });
+  }
+
+  /* ---------- wrap app functions so the polish survives re-renders ---------- */
+  function wrap(name, after){
+    const f = window[name]; if (typeof f !== 'function') return;
+    window[name] = function(){ const r = f.apply(this, arguments); try { after(); } catch(e){} return r; };
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    wrap('updateChart', applyChartTheme);
+    wrap('renderResults', decorateResults);
+    wrap('changeLanguage', decorateResults);
+    const tb = document.getElementById('themeToggle'); if (tb) tb.addEventListener('click', window.mcToggleTheme);
+    const dia = document.getElementById('diameter'); if (dia) dia.addEventListener('input', updateArea);
+    updateArea();
+    initCollapsible();
+    initShortcuts();
+    setTheme(document.documentElement.getAttribute('data-theme') || 'light');
+  });
+})();
 </script>
 </body>
 </html>
