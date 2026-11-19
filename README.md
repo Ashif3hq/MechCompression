@@ -18,7 +18,9 @@ No installation or sign-up is needed. It works on any modern browser (Chrome, Ed
 - **Units**: Pa, kPa, MPa or GPa.
 - **Languages**: English, Français, Español.
 - **Interactive chart**: pan, box-zoom and reset. You can show or hide each specimen.
+- **Graph image export**: publication-ready PNG for reports, theses and slides (300 dpi 4:3, 16:9 slide, square or current view), with a white or transparent background and adjustable text size. You can also copy the graph straight into PowerPoint or Word.
 - **Export**: results as CSV or JSON, plus a printable report for each specimen.
+- **Dark mode**, collapsible sidebar sections and a built-in sample dataset to try it out.
 
 ## Quick start
 
@@ -27,6 +29,17 @@ No installation or sign-up is needed. It works on any modern browser (Chrome, Ed
 3. Enter the sample ID, diameter and length.
 4. Choose a mode: **Young** (click the start and end of the linear region) or **Max** (click the peak).
 5. Click **Calculate**, then export to CSV or JSON, or open the report.
+
+## Keyboard shortcuts
+
+| Key | Action |
+|---|---|
+| `Z` / `P` / `Y` / `M` | Zoom, Pan, Young's modulus, Max σ mode |
+| `1` / `2` / `3` | σ–ε, F–δ, F–t view |
+| `R` | Reset view |
+| `Enter` | Calculate |
+| `E` | Export graph image |
+| `D` | Toggle dark mode |
 
 ## Run locally
 
