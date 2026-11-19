@@ -1328,7 +1328,8 @@ changeLanguage('en');
   }
 
   function isNativeTRA(text){
-    return /"?temps"?\s*;/i.test(text.slice(0, 4000)) && /;/.test(text);
+    // native TRA-style export: a ';'-separated header row starting with "Temps…" (e.g. "Temps d'essai";"Force standard";"Canal LE";…)
+    return /(^|\n)\s*"?temps[^\n]*;[^\n]*force/i.test(text.slice(0, 6000));
   }
 
   function decode(buf){
